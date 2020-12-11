@@ -1,6 +1,9 @@
-mole: lib/read_params/read_params.o lib/get_index/get_index.o src/main.o 
-	gcc -Wall -o mole src/main.o lib/read_params/read_params.o lib/get_index/get_index.o
+mole: lib/read_params/read_params.o lib/get_index/get_index.o src/main.o  lib/index_pthread/index_pthread.o
+	gcc -Wall -std=gnu99 -o mole src/main.o lib/read_params/read_params.o lib/get_index/get_index.o lib/index_pthread/index_pthread.o -lpthread -lm
 	make clean
+
+lib/index_pthread/index_pthread.o: lib/index_pthread/index_pthread.c
+	gcc -Wall -o lib/index_pthread/index_pthread.o -c lib/index_pthread/index_pthread.c
 
 lib/read_params/read_params.o: lib/read_params/read_params.c
 	gcc -Wall -o lib/read_params/read_params.o -c lib/read_params/read_params.c

@@ -15,7 +15,6 @@
 #define GZIP 8075
 #define ZIP 20555
 node * head;
-// podmien potem spowrotem head i usun zeby nie bylo wyciekow pamieci 
 
 static int insert(file new_file) {
     node * new_node;
@@ -92,13 +91,15 @@ static int walk(const char *path, const struct stat *s, int type, struct FTW *f)
     return EXIT_SUCCESS;
 }
 
-int get_index(char * dir_path, char ** index_path, node ** global_head) {
-    //int out;
-    // if ((out = open(*index_path, O_WRONLY|O_CREAT|O_TRUNC|O_APPEND, 0777)) < 0) {
-    //     fprintf(stderr, "Open function failed\n");
-    //     return EXIT_FAILURE;
-    // }
+int get_index(char * dir_path, node ** global_head) {
     head = NULL;
+    node *temp, *it;
+    it = *global_head;
+    while(it) {
+        temp = it;
+        it = it->next;
+        free(temp);
+    }
     if (nftw(dir_path, walk, MAXFD, FTW_PHYS) != 0) {
         fprintf(stderr, "Nftw function failed\n");
         return EXIT_FAILURE;
