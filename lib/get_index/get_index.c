@@ -30,17 +30,17 @@ static int insert(file new_file) {
 
 static file create_new_file(const char *path, const struct stat *s, int offset, unsigned int file_type) {
     file new_file;
-    new_file.name = malloc(sizeof(char) * (strlen(path) - offset) + 1);
+    new_file.name = malloc(sizeof(char) * (strlen(path) - offset + 1));
     strncpy(new_file.name, &path[offset], (strlen(path) - offset));
     for (int i = offset, o = 0; i < strlen(path); i++, o++) {
         new_file.name[o] = path[i];
     }
     new_file.name[strlen(path) - offset] = '\0';
     new_file.owner_uid = s->st_uid;
-    new_file.path = malloc(sizeof(char) * strlen(path) + 1);
+    new_file.path = malloc(sizeof(char) * (strlen(path) + 1));
     strcpy(new_file.path, path);
     new_file.size = s->st_size;
-    new_file.type = 1;
+    new_file.type = file_type;
     return new_file;
 }
 
@@ -98,6 +98,8 @@ int get_index(char * dir_path, node ** global_head) {
     while(it) {
         temp = it;
         it = it->next;
+        free(temp->elem.name);
+        free(temp->elem.path);
         free(temp);
     }
     if (nftw(dir_path, walk, MAXFD, FTW_PHYS) != 0) {

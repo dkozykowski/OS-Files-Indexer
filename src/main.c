@@ -35,7 +35,7 @@ int main(int argc, char ** argv) {
     pthread_mutex_lock(&mx_head);
     temp = head;
     while(temp) {
-        printf("Mamy plik %s\n", temp->elem.name);
+        printf("Nazwa: %s\nWlasciciel:%d\nSciezka:%s\nrozmiar:%ld\ntyp:%d\n\n", temp->elem.name, temp->elem.owner_uid, temp->elem.path, temp->elem.size, temp->elem.type);
         temp = temp->next;
     }
     pthread_mutex_unlock(&mx_head);
