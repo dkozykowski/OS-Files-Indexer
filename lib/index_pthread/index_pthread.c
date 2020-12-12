@@ -16,14 +16,15 @@ static void free_old_list(node * head) {
     while(head) {
         temp = head;
         head = head->next;
-        free(temp->elem.name);
-        free(temp->elem.path);
+        if(temp->elem.name) free(temp->elem.name);
+        if (temp->elem.path) free(temp->elem.path);
         free(temp);
     }
 }
 
 static void perform_indexing(index_args * args) {
     node * new_head, * old_head;
+    old_head = new_head = NULL;
     pthread_mutex_lock(args->mx_status_flag);
     args->status_flag = IN_PROGRESS;
     pthread_mutex_unlock(args->mx_status_flag);
@@ -50,6 +51,7 @@ static void perform_indexing(index_args * args) {
     pthread_mutex_unlock(args->mx_status_flag);
 
     free_old_list(old_head);
+    old_head = NULL;
 }
 
 void * index_thread_work(void * raw_args) {
@@ -87,9 +89,10 @@ void * index_thread_work(void * raw_args) {
         pthread_mutex_unlock(args->mx_head);
 
         free_old_list(old_head);
+        old_head = NULL;
     }
-    int status_flag;
-    int exit_flag;
+    int status_flag = DONE;
+    int exit_flag = NONE;
     while(1) {
         if(args->time > 0 && ELAPSED(last_edit_time, current_time) >= args->time) {
             perform_indexing(args);

@@ -14,16 +14,17 @@
 
 static void count(read_commands_args *args) {
     node * temp;
-    int counter[6];
+    int counter[6] = { 0, 0, 0, 0, 0, 0 };
     pthread_mutex_lock(args->mx_head);
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         counter[temp->elem.type]++;
         temp = temp->next;
     }
     pthread_mutex_unlock(args->mx_head);
+
     pthread_mutex_lock(args->mx_stdout);
-    printf("Folders: %d\nJPEG: %d\nPNG: %d\nGZIP: %d\n ZIP: %d\n", 
+    printf("Folders: %d\nJPEG: %d\nPNG: %d\nGZIP: %d\nZIP: %d\n\n", 
         counter[1], counter[2], counter[3], counter[4], counter[5]);
     pthread_mutex_unlock(args->mx_stdout);
 }
@@ -58,7 +59,7 @@ static void owner(read_commands_args * args, uid_t uid) {
     FILE * output_destination;
     int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         if (temp->elem.owner_uid == uid) elements_counter++;
         temp = temp->next;
@@ -69,7 +70,7 @@ static void owner(read_commands_args * args, uid_t uid) {
     }
     else output_destination = stdout;
 
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         if (temp->elem.owner_uid == uid) {
             print_file_info(args, &(temp->elem), output_destination);   
@@ -86,7 +87,7 @@ static void largerthan(read_commands_args * args, ssize_t size) {
     int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
 
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         if (temp->elem.size > size) elements_counter++;
         temp = temp->next;
@@ -97,7 +98,7 @@ static void largerthan(read_commands_args * args, ssize_t size) {
     }
     else output_destination = stdout;
 
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         if (temp->elem.size > size) {
             print_file_info(args, &(temp->elem), output_destination);   
@@ -115,18 +116,17 @@ static void namepart(read_commands_args * args, char * sequence) {
     int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
 
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
+        printf("mamy %d i %d\n", temp != NULL, temp->elem.name != NULL);
         if (strstr(temp->elem.name, sequence) != NULL) elements_counter++;
         temp = temp->next;
     }
-
     if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
         output_destination = popen(args->pager, "w");
     }
     else output_destination = stdout;
-
-    temp = args->head;
+    temp = *(args->head);
     while(temp) {
         if (strstr(temp->elem.name, sequence) != NULL) {
             print_file_info(args, &(temp->elem), output_destination);
@@ -173,10 +173,12 @@ void read_commands(read_commands_args *args) {
                 fprintf(stderr, "Invalid argument\n");
                 continue;
             };
+
             pthread_mutex_lock(args->mx_status_flag);
             status_flag = *(args->status_flag);
             if (*args->status_flag == DONE) *(args->status_flag) = PENDING;
             pthread_mutex_unlock(args->mx_status_flag);
+            
             if (status_flag != DONE) {
                 pthread_mutex_lock(args->mx_stdout);
                 printf("Index process already running\n");

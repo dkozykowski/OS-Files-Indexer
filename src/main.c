@@ -56,21 +56,14 @@ int main(int argc, char ** argv) {
     args_r_c->mx_status_flag = &mx_status_flag;
     args_r_c->exit_flag = &(args_index->exit_flag);
     args_r_c->mx_exit_flag = &mx_exit_flag;
-    args_r_c->head = head;
+    args_r_c->status_flag = &(args_index->status_flag);
+    args_r_c->head = &head;
     args_r_c->mx_head = &mx_head;
     args_r_c->mx_file_saving_flag = &mx_file_saving_flag;
     args_r_c->pager = getenv("PAGER");
     
     read_commands(args_r_c);
-    // pthread_mutex_lock(&mx_head);
-    // temp = head;
-    // while(temp) {
-    //     pthread_mutex_lock(&mx_stdout);
-    //     printf("Nazwa: %s\nWlasciciel:%d\nSciezka:%s\nrozmiar:%ld\ntyp:%d\n\n", temp->elem.name, temp->elem.owner_uid, temp->elem.path, temp->elem.size, temp->elem.type);
-    //     pthread_mutex_unlock(&mx_stdout);
-    //     temp = temp->next;
-    // }
-    // pthread_mutex_unlock(&mx_head);
+
     pthread_join(args_index->id, NULL);
     free(args_index);
     free(args_r_c);
