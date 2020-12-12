@@ -10,6 +10,8 @@
 #define GZIP 4
 #define ZIP 5
 
+#define MAX_ELEMS_WITHOUT_PAGER 3
+
 static void count(read_commands_args *args) {
     node * temp;
     int counter[6];
@@ -26,69 +28,112 @@ static void count(read_commands_args *args) {
     pthread_mutex_unlock(args->mx_stdout);
 }
 
-static void print_file_info(read_commands_args * args, file * elem) {
+static void print_file_info(read_commands_args * args, file * elem, FILE * output_destination) {
     pthread_mutex_lock(args->mx_stdout);
-    printf("Path: %s\nSize: %ld\nType: ", (*elem).path, (*elem).size);
+    fprintf(output_destination, "Path: %s\nSize: %ld\nType: ", (*elem).path, (*elem).size);
     switch((*elem).type) {
         case DIR: 
-            printf("DIR\n\n");
+            fprintf(output_destination, "DIR\n\n");
             break;
         case JPEG:
-            printf("JPEG\n\n");
+            fprintf(output_destination, "JPEG\n\n");
             break;
         case PNG:
-            printf("PNG\n\n");
+            fprintf(output_destination, "PNG\n\n");
             break;
         case GZIP:
-            printf("GZIP\n\n");
+            fprintf(output_destination, "GZIP\n\n");
             break;
         case ZIP:
-            printf("ZIP\n\n");
+            fprintf(output_destination, "ZIP\n\n");
             break;
         default:
             break;
     }
+    pthread_mutex_unlock(args->mx_stdout);
 }
 
 static void owner(read_commands_args * args, uid_t uid) {
     node * temp;
+    FILE * output_destination;
+    int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
     temp = args->head;
     while(temp) {
-        if (temp->elem.owner_uid == uid) {
-            print_file_info(args, &(temp->elem));   
-        }
-        pthread_mutex_unlock(args->mx_stdout);
+        if (temp->elem.owner_uid == uid) elements_counter++;
         temp = temp->next;
     }
+
+    if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
+        output_destination = popen(args->pager, "w");
+    }
+    else output_destination = stdout;
+
+    temp = args->head;
+    while(temp) {
+        if (temp->elem.owner_uid == uid) {
+            print_file_info(args, &(temp->elem), output_destination);   
+        }
+        temp = temp->next;
+    }
+    if (output_destination != stdout) pclose(output_destination);
     pthread_mutex_unlock(args->mx_head);
 }
 
 static void largerthan(read_commands_args * args, ssize_t size) {
     node * temp;
+    FILE * output_destination;
+    int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
+
+    temp = args->head;
+    while(temp) {
+        if (temp->elem.size > size) elements_counter++;
+        temp = temp->next;
+    }
+    
+    if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
+        output_destination = popen(args->pager, "w");
+    }
+    else output_destination = stdout;
+
     temp = args->head;
     while(temp) {
         if (temp->elem.size > size) {
-            print_file_info(args, &(temp->elem));   
+            print_file_info(args, &(temp->elem), output_destination);   
         }
         pthread_mutex_unlock(args->mx_stdout);
         temp = temp->next;
     }
+    if (output_destination != stdout) pclose(output_destination);
     pthread_mutex_unlock(args->mx_head);
 }
 
 static void namepart(read_commands_args * args, char * sequence) {
     node * temp;
+    FILE * output_destination;
+    int elements_counter = 0;
     pthread_mutex_lock(args->mx_head);
+
+    temp = args->head;
+    while(temp) {
+        if (strstr(temp->elem.name, sequence) != NULL) elements_counter++;
+        temp = temp->next;
+    }
+
+    if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
+        output_destination = popen(args->pager, "w");
+    }
+    else output_destination = stdout;
+
     temp = args->head;
     while(temp) {
         if (strstr(temp->elem.name, sequence) != NULL) {
-            print_file_info(args, &(temp->elem));
+            print_file_info(args, &(temp->elem), output_destination);
         }
-        pthread_mutex_unlock(args->mx_stdout);
         temp = temp->next;
     }
+    if (output_destination != stdout) pclose(output_destination);
     pthread_mutex_unlock(args->mx_head);
 }
 

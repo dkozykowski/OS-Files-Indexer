@@ -29,12 +29,10 @@ static void perform_indexing(index_args * args) {
     pthread_mutex_unlock(args->mx_status_flag);
 
     if(get_index(args->dir_path, &new_head) != 0) exit(EXIT_FAILURE);
-    printf("Blokuje!\n");
     pthread_mutex_lock(args->mx_file_saving_flag);
     if (save_data_to_file(args->index_path, new_head) != 0) {
         exit(EXIT_FAILURE);
     }
-    printf("Odblokowuje\n");
     pthread_mutex_unlock(args->mx_file_saving_flag);
 
     pthread_mutex_lock(args->mx_stdout);
@@ -80,6 +78,7 @@ void * index_thread_work(void * raw_args) {
     } 
     else {
         node * new_head, * old_head;
+        new_head = NULL;
         load_data_from_file(args->index_path, &new_head);
         pthread_mutex_lock(args->mx_head);
         old_head = *(args->head);

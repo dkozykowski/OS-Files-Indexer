@@ -59,6 +59,7 @@ int main(int argc, char ** argv) {
     args_r_c->head = head;
     args_r_c->mx_head = &mx_head;
     args_r_c->mx_file_saving_flag = &mx_file_saving_flag;
+    args_r_c->pager = getenv("PAGER");
     
     read_commands(args_r_c);
     // pthread_mutex_lock(&mx_head);
