@@ -9,7 +9,7 @@
 #include "../data_saving/data_saving.h"
 #include "../../models/node.h"
 #include "../../models/file_data.h"
-#define ELAPSED(start,end) ((end).tv_sec-(start).tv_sec)+(((end).tv_nsec - (start).tv_nsec) * 1.0e-9)
+#define ELAPSED(start,end) ((end).tv_sec-(start).tv_sec)
 
 static void free_old_list(node * head) {
     node * temp;
@@ -76,6 +76,7 @@ void * index_thread_work(void * raw_args) {
         exit(EXIT_FAILURE); 
     }
     if (args->time > 0 && ELAPSED(last_edit_time, current_time) >= args->time) {
+        clock_gettime(CLOCK_REALTIME, &last_edit_time);
         perform_indexing(args);
     } 
     else {
@@ -94,8 +95,16 @@ void * index_thread_work(void * raw_args) {
     int status_flag = DONE;
     int exit_flag = NONE;
     while(1) {
-        if(args->time > 0 && ELAPSED(last_edit_time, current_time) >= args->time) {
-            perform_indexing(args);
+        if(args->time > 0) {
+            clock_gettime(CLOCK_REALTIME, &current_time);
+            if (ELAPSED(last_edit_time, current_time) >= args->time) {
+                if(clock_gettime(CLOCK_REALTIME, &current_time)) {
+                    fprintf(stderr, "Clock_gettime function failed");
+                    exit(EXIT_FAILURE); 
+                }
+                clock_gettime(CLOCK_REALTIME, &last_edit_time);
+                perform_indexing(args);
+            }
         }
         else {
             pthread_mutex_lock(args->mx_status_flag);
@@ -105,6 +114,7 @@ void * index_thread_work(void * raw_args) {
             }
             pthread_mutex_unlock(args->mx_status_flag);
             if (status_flag == PENDING) {
+                clock_gettime(CLOCK_REALTIME, &last_edit_time);
                 perform_indexing(args);
             }
             status_flag = DONE;
