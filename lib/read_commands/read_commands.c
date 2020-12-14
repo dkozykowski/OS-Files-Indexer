@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <signal.h>
 #include "../index_pthread/index_pthread.h"
 #define DIR 1
 #define JPEG 2
@@ -207,6 +208,10 @@ void read_commands(read_commands_args *args) {
                 pthread_mutex_lock(args->mx_stdout);
                 printf("Index process already running\n");
                 pthread_mutex_unlock(args->mx_stdout);
+            }
+            if(kill(getpid(), SIGUSR1) != 0) {
+                fprintf(stderr, "KIll function failed\n");
+                exit(EXIT_FAILURE);
             }
         }
         else if (strcmp(command_name, "count") == 0) {

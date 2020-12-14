@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
 #include "../lib/read_params/read_params.h"
 #include "../lib/index_pthread/index_pthread.h"
 #include "../lib/get_index/get_index.h"
 #include "../lib/read_commands/read_commands.h"
 #include "../models/node.h"
 #include "../models/file_data.h"
-#include <pthread.h>
-
-
-
 
 int main(int argc, char ** argv) {
     int n;
@@ -23,6 +22,12 @@ int main(int argc, char ** argv) {
     pthread_mutex_t mx_status_flag = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mx_exit_flag = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mx_file_saving_flag = PTHREAD_MUTEX_INITIALIZER;
+
+    sigset_t signals_to_block;
+    sigemptyset(&signals_to_block);
+    sigaddset(&signals_to_block, SIGALRM);
+    sigaddset(&signals_to_block, SIGUSR1);
+    sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 
     index_args * args_index = malloc(sizeof(index_args));
     if(!args_index) {

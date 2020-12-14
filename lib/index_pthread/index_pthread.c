@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
+#include <signal.h>
+#include <unistd.h>
 #include "../get_index/get_index.h"
 #include "../data_saving/data_saving.h"
 #include "../../models/node.h"
@@ -64,6 +66,7 @@ void * index_thread_work(void * raw_args) {
         if (errno == ENOENT) {
             perform_indexing(args);
             clock_gettime(CLOCK_REALTIME, &last_edit_time);
+            if(args->time > 0) alarm(args->time);
         }
         else {
            fprintf(stderr, "Lstat function failed");
@@ -77,12 +80,16 @@ void * index_thread_work(void * raw_args) {
         exit(EXIT_FAILURE); 
     }
     if (args->time > 0 && ELAPSED(last_edit_time, current_time) >= args->time) {
-        clock_gettime(CLOCK_REALTIME, &last_edit_time);
         perform_indexing(args);
+        clock_gettime(CLOCK_REALTIME, &last_edit_time);
+        alarm(args->time);
     } 
     else {
         node * new_head, * old_head;
         new_head = NULL;
+        if (args->time > 0) {
+            alarm(args->time - ELAPSED(last_edit_time, current_time));
+        }
         load_data_from_file(args->index_path, &new_head);
         pthread_mutex_lock(args->mx_head);
         old_head = *(args->head);
@@ -93,9 +100,21 @@ void * index_thread_work(void * raw_args) {
         free_old_list(old_head);
         old_head = NULL;
     }
+
     int status_flag = DONE;
     int exit_flag = NONE;
+
+    sigset_t signals;
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGALRM);
+    sigaddset(&signals, SIGUSR1);
+
+    int signo;
     while(1) {
+        if (sigwait(&signals, &signo) != 0) {
+            fprintf(stderr, "Sigwait function failed\n");
+            exit(EXIT_FAILURE);
+        }
         if(args->time > 0) {
             clock_gettime(CLOCK_REALTIME, &current_time);
             if (ELAPSED(last_edit_time, current_time) >= args->time) {
@@ -103,8 +122,9 @@ void * index_thread_work(void * raw_args) {
                     fprintf(stderr, "Clock_gettime function failed");
                     exit(EXIT_FAILURE); 
                 }
-                clock_gettime(CLOCK_REALTIME, &last_edit_time);
                 perform_indexing(args);
+                clock_gettime(CLOCK_REALTIME, &last_edit_time);
+                alarm(args->time);
             }
         }
         else {
@@ -115,8 +135,9 @@ void * index_thread_work(void * raw_args) {
             }
             pthread_mutex_unlock(args->mx_status_flag);
             if (status_flag == PENDING) {
-                clock_gettime(CLOCK_REALTIME, &last_edit_time);
                 perform_indexing(args);
+                clock_gettime(CLOCK_REALTIME, &last_edit_time);
+                if(args->time > 0) alarm(args->time);
             }
             status_flag = DONE;
             pthread_mutex_lock(args->mx_status_flag);
@@ -127,7 +148,6 @@ void * index_thread_work(void * raw_args) {
         exit_flag = args->exit_flag;
         pthread_mutex_unlock(args->mx_exit_flag);
         if (exit_flag == EXIT) break;
-        sleep(1);
     }
 
     return NULL;
