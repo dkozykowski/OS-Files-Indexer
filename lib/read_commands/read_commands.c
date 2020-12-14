@@ -30,7 +30,7 @@ static void count(read_commands_args *args) {
 }
 
 static void print_file_info(read_commands_args * args, file * elem, FILE * output_destination) {
-    pthread_mutex_lock(args->mx_stdout);
+    if (output_destination == stdout) pthread_mutex_lock(args->mx_stdout);
     fprintf(output_destination, "Path: %s\nSize: %ld\nType: ", (*elem).path, (*elem).size);
     switch((*elem).type) {
         case DIR: 
@@ -51,7 +51,7 @@ static void print_file_info(read_commands_args * args, file * elem, FILE * outpu
         default:
             break;
     }
-    pthread_mutex_unlock(args->mx_stdout);
+    if (output_destination == stdout) pthread_mutex_unlock(args->mx_stdout);
 }
 
 static void owner(read_commands_args * args, uid_t uid) {
@@ -67,6 +67,10 @@ static void owner(read_commands_args * args, uid_t uid) {
 
     if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
         output_destination = popen(args->pager, "w");
+        if (output_destination == NULL) {
+            fprintf(stderr, "Popen function failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else output_destination = stdout;
 
@@ -77,7 +81,11 @@ static void owner(read_commands_args * args, uid_t uid) {
         }
         temp = temp->next;
     }
-    if (output_destination != stdout) pclose(output_destination);
+    if (output_destination != stdout) {
+        if(pclose(output_destination) != 0) {
+            fprintf(stderr, "Pclose function failed\n");
+        }
+    }
     pthread_mutex_unlock(args->mx_head);
 }
 
@@ -95,6 +103,10 @@ static void largerthan(read_commands_args * args, ssize_t size) {
     
     if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
         output_destination = popen(args->pager, "w");
+        if (output_destination == NULL) {
+            fprintf(stderr, "Popen function failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else output_destination = stdout;
 
@@ -103,10 +115,13 @@ static void largerthan(read_commands_args * args, ssize_t size) {
         if (temp->elem.size > size) {
             print_file_info(args, &(temp->elem), output_destination);   
         }
-        pthread_mutex_unlock(args->mx_stdout);
         temp = temp->next;
     }
-    if (output_destination != stdout) pclose(output_destination);
+    if (output_destination != stdout) {
+        if(pclose(output_destination) != 0) {
+            fprintf(stderr, "Pclose function failed\n");
+        }
+    }
     pthread_mutex_unlock(args->mx_head);
 }
 
@@ -118,14 +133,19 @@ static void namepart(read_commands_args * args, char * sequence) {
 
     temp = *(args->head);
     while(temp) {
-        printf("mamy %d i %d\n", temp != NULL, temp->elem.name != NULL);
         if (strstr(temp->elem.name, sequence) != NULL) elements_counter++;
         temp = temp->next;
     }
+
     if (elements_counter > MAX_ELEMS_WITHOUT_PAGER && args->pager) {
         output_destination = popen(args->pager, "w");
+        if (output_destination == NULL) {
+            fprintf(stderr, "Popen function failed\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else output_destination = stdout;
+
     temp = *(args->head);
     while(temp) {
         if (strstr(temp->elem.name, sequence) != NULL) {
@@ -133,18 +153,22 @@ static void namepart(read_commands_args * args, char * sequence) {
         }
         temp = temp->next;
     }
-    if (output_destination != stdout) pclose(output_destination);
+    if (output_destination != stdout) {
+        if(pclose(output_destination) != 0) {
+            fprintf(stderr, "Pclose function failed\n");
+        }
+    }
     pthread_mutex_unlock(args->mx_head);
 }
 
 void read_commands(read_commands_args *args) {
-    char command_name[20];
-    char buffer[100];
-    char argument[50];
+    char command_name[21];
+    char buffer[101];
+    char argument[51];
     int status_flag;
     while(1) {
         fgets(buffer, 100, stdin);
-        int arguments_read = sscanf(buffer, "%s %s", command_name, argument);
+        int arguments_read = sscanf(buffer, "%20s %50s", command_name, argument);
         if (arguments_read > 2) {
             fprintf(stderr, "Invalid argument\n");
             continue;

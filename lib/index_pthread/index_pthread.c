@@ -63,6 +63,7 @@ void * index_thread_work(void * raw_args) {
     if(lstat(args->index_path, &filestat)) {
         if (errno == ENOENT) {
             perform_indexing(args);
+            clock_gettime(CLOCK_REALTIME, &last_edit_time);
         }
         else {
            fprintf(stderr, "Lstat function failed");

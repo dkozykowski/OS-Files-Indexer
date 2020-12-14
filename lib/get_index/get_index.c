@@ -37,8 +37,11 @@ static file create_new_file(const char *path, const struct stat *s, int offset, 
     }
     new_file.name[strlen(path) - offset] = '\0';
     new_file.owner_uid = s->st_uid;
-    new_file.path = malloc(sizeof(char) * (strlen(path) + 1));
-    strcpy(new_file.path, path);
+    new_file.path = realpath(path, NULL);
+    if (new_file.name == NULL) {
+        fprintf(stderr, "Realpath function failed\n");
+        exit(EXIT_FAILURE);
+    }
     new_file.size = s->st_size;
     new_file.type = file_type;
     return new_file;

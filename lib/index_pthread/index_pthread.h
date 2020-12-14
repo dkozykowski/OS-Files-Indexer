@@ -13,7 +13,7 @@
 
 typedef struct index_args {
     pthread_t id;
-    unsigned int time;
+    int time;
     node ** head;
     pthread_mutex_t * mx_head;
     char * index_path;
