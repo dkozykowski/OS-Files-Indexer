@@ -5,28 +5,43 @@
 #include <pthread.h>
 #include <signal.h>
 #include "../index_pthread/index_pthread.h"
-#define DIR 1
-#define JPEG 2
-#define PNG 3
-#define GZIP 4
-#define ZIP 5
+#include "../get_index/get_index.h"
 
 #define MAX_ELEMS_WITHOUT_PAGER 3
 
 static void count(read_commands_args *args) {
     node * temp;
-    int counter[6] = { 0, 0, 0, 0, 0, 0 };
+    int dir_counter, jpeg_counter, png_counter, gzip_counter, zip_counter;
+    dir_counter = jpeg_counter = png_counter = gzip_counter = zip_counter = 0;
     pthread_mutex_lock(args->mx_head);
     temp = *(args->head);
     while(temp) {
-        counter[temp->elem.type]++;
+        switch(temp->elem.type) {
+        case DIR: 
+            dir_counter++;
+            break;
+        case JPEG:
+            jpeg_counter++;
+            break;
+        case PNG:
+            png_counter++;
+            break;
+        case GZIP:
+            gzip_counter++;
+            break;
+        case ZIP:
+            zip_counter++;
+            break;
+        default:
+            break;
+        }
         temp = temp->next;
     }
     pthread_mutex_unlock(args->mx_head);
 
     pthread_mutex_lock(args->mx_stdout);
-    printf("Folders: %d\nJPEG: %d\nPNG: %d\nGZIP: %d\nZIP: %d\n\n", 
-        counter[1], counter[2], counter[3], counter[4], counter[5]);
+    printf("DIRS: %d\nJPEG: %d\nPNG: %d\nGZIP: %d\nZIP: %d\n\n", 
+        dir_counter, jpeg_counter, png_counter, gzip_counter, zip_counter);
     pthread_mutex_unlock(args->mx_stdout);
 }
 
@@ -182,6 +197,10 @@ void read_commands(read_commands_args *args) {
             pthread_mutex_lock(args->mx_exit_flag);
             *(args->exit_flag) = EXIT;
             pthread_mutex_unlock(args->mx_exit_flag);
+            if(kill(getpid(), SIGUSR1) != 0) {
+                fprintf(stderr, "KIll function failed\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         }
         else if (strcmp(command_name, "exit!") == 0) {
@@ -189,8 +208,13 @@ void read_commands(read_commands_args *args) {
                 fprintf(stderr, "Invalid argument\n");
                 continue;
             };
-            pthread_mutex_lock(args->mx_file_saving_flag);
-            exit(EXIT_SUCCESS);
+            pthread_mutex_lock(args->mx_exit_flag);
+            *(args->exit_flag) = EXIT_NOW;
+            pthread_mutex_unlock(args->mx_exit_flag);
+            if(kill(getpid(), SIGUSR1) != 0) {
+                fprintf(stderr, "KIll function failed\n");
+                exit(EXIT_FAILURE);
+            }
             break;
         }
         else if (strcmp(command_name, "index") == 0) {
@@ -209,6 +233,7 @@ void read_commands(read_commands_args *args) {
                 printf("Index process already running\n");
                 pthread_mutex_unlock(args->mx_stdout);
             }
+
             if(kill(getpid(), SIGUSR1) != 0) {
                 fprintf(stderr, "KIll function failed\n");
                 exit(EXIT_FAILURE);

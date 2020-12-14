@@ -7,6 +7,7 @@
 
 #define NONE 1
 #define EXIT 2
+#define EXIT_NOW 3
 
 #ifndef _INDEX_PTHREAD_H
 #define _INDEX_PTHREAD_H

@@ -1,5 +1,7 @@
 #define _XOPEN_SOURCE 500
+#define _GNU_SOURCE
 #include "get_index.h"
+#include <unistd.h>
 #include "errno.h"
 #include <sys/stat.h>
 #include <stdio.h>
@@ -7,14 +9,13 @@
 #include <fcntl.h>
 #include <ftw.h>
 #include <string.h>
-#define MAXFD 20
+#include "../bulk_operations/bulk_operations.h"
 #include "../../models/node.h"
 #include "../../models/file_data.h"
-#define JPEG 65496
-#define PNG 35152
-#define GZIP 8075
-#define ZIP 20555
+#define MAXFD 20
 node * head;
+int * exit_flag;
+int ile = 0;
 
 static int insert(file new_file) {
     node * new_node;
@@ -50,43 +51,27 @@ static file create_new_file(const char *path, const struct stat *s, int offset, 
 static int walk(const char *path, const struct stat *s, int type, struct FTW *f) {
     file new_file;
     if (type == FTW_D) {
-        new_file = create_new_file(path, s, f->base, 1);
+        new_file = create_new_file(path, s, f->base, DIR);
         insert(new_file);
     }
     else {
         unsigned char magic_number[2];
         int in;
-        if ((in = open(path, O_RDONLY)) < 0) {
+        if ((in = TEMP_FAILURE_RETRY(open(path, O_RDONLY))) < 0) {
             fprintf(stderr, "Open function failed\n");
             return EXIT_FAILURE;
         }
-        if (read(in, magic_number, 2) != 2) {
+        if (bulk_read(in, magic_number, 2) != 2) {
             fprintf(stderr, "Open function failed\n");
             return EXIT_FAILURE;
         }
         
         unsigned int file_type = magic_number[0] * 16 * 16 + magic_number[1];
-        switch(file_type) {
-            case JPEG: 
-                new_file = create_new_file(path, s, f->base, 2);
-                insert(new_file);
-                break;
-            case PNG: 
-                new_file = create_new_file(path, s, f->base, 3);
-                insert(new_file);
-                break;
-            case GZIP:
-                new_file = create_new_file(path, s, f->base, 4);
-                insert(new_file);
-                break;
-            case ZIP: 
-                new_file = create_new_file(path, s, f->base, 5);
-                insert(new_file);
-                break;
-            default:
-                break;
+        if(file_type == JPEG || file_type == PNG || file_type == GZIP || file_type == ZIP) {
+            new_file = create_new_file(path, s, f->base, file_type);
+            insert(new_file);
         }
-        if(close(in)) {
+        if((close(in))) {
             fprintf(stderr, "Close function failed\n");
             return EXIT_FAILURE;
         }
