@@ -8,6 +8,9 @@
 #include "../get_index/get_index.h"
 
 #define MAX_ELEMS_WITHOUT_PAGER 3
+#define MAX_COMMAND_LENGH 20
+#define MAX_ARGUMENT_LENGH 50
+#define BUFFER_SIZE 100
 
 static void count(read_commands_args *args) {
     node * temp;
@@ -178,12 +181,13 @@ static void namepart(read_commands_args * args, char * sequence) {
 }
 
 void read_commands(read_commands_args *args) {
-    char command_name[21];
-    char buffer[101];
-    char argument[51];
+    char command_name[MAX_COMMAND_LENGH + 1];
+    char buffer[BUFFER_SIZE + 1];
+    char argument[MAX_ARGUMENT_LENGH + 1];
     int status_flag;
+    
     while(1) {
-        fgets(buffer, 100, stdin);
+        fgets(buffer, BUFFER_SIZE, stdin);
         int arguments_read = sscanf(buffer, "%20s %50s", command_name, argument);
         if (arguments_read > 2) {
             fprintf(stderr, "Invalid argument\n");

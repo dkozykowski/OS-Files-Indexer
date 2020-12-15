@@ -10,6 +10,17 @@
 #include "../models/node.h"
 #include "../models/file_data.h"
 
+static void free_old_list(node * head) {
+    node * temp;
+    while(head) {
+        temp = head;
+        head = head->next;
+        if(temp->elem.name) free(temp->elem.name);
+        if (temp->elem.path) free(temp->elem.path);
+        free(temp);
+    }
+}
+
 int main(int argc, char ** argv) {
     int n;
     char * index_path, * dir_path;
@@ -72,5 +83,6 @@ int main(int argc, char ** argv) {
     pthread_join(args_index->id, NULL);
     free(args_index);
     free(args_r_c);
+    free_old_list(head);
     return EXIT_SUCCESS;
 }

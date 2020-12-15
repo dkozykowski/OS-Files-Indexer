@@ -10,12 +10,24 @@
 #include <ftw.h>
 #include <string.h>
 #include "../bulk_operations/bulk_operations.h"
+#include "../index_pthread/index_pthread.h"
 #include "../../models/node.h"
 #include "../../models/file_data.h"
 #define MAXFD 20
 node * head;
 int * exit_flag;
 int ile = 0;
+
+static void free_old_list(node * head) {
+    node * temp;
+    while(head) {
+        temp = head;
+        head = head->next;
+        if(temp->elem.name) free(temp->elem.name);
+        if (temp->elem.path) free(temp->elem.path);
+        free(temp);
+    }
+}
 
 static int insert(file new_file) {
     node * new_node;
@@ -50,6 +62,9 @@ static file create_new_file(const char *path, const struct stat *s, int offset, 
 
 static int walk(const char *path, const struct stat *s, int type, struct FTW *f) {
     file new_file;
+    if (*exit_flag == EXIT_NOW) {
+        return 0;
+    }
     if (type == FTW_D) {
         new_file = create_new_file(path, s, f->base, DIR);
         insert(new_file);
@@ -79,12 +94,16 @@ static int walk(const char *path, const struct stat *s, int type, struct FTW *f)
     return EXIT_SUCCESS;
 }
 
-int get_index(char * dir_path, node ** global_head) {
+int get_index(char * dir_path, node ** global_head, int * exit_flag_handler) {
+    exit_flag = exit_flag_handler;
     head = NULL;
     if (nftw(dir_path, walk, MAXFD, FTW_PHYS) != 0) {
         fprintf(stderr, "Nftw function failed\n");
         return EXIT_FAILURE;
     }
-    *global_head = head;
+    if (*exit_flag == EXIT_NOW) {
+        free_old_list(head);
+    }
+    else *global_head = head;
     return EXIT_SUCCESS;
 }

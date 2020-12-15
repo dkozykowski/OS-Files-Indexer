@@ -24,14 +24,14 @@ static void free_old_list(node * head) {
     }
 }
 
-static void perform_indexing(index_args * args) {
+static void perform_indexing(index_args * args, int * exit_flag) {
     node * new_head, * old_head;
     old_head = new_head = NULL;
     pthread_mutex_lock(args->mx_status_flag);
     args->status_flag = IN_PROGRESS;
     pthread_mutex_unlock(args->mx_status_flag);
 
-    if(get_index(args->dir_path, &new_head) != 0) exit(EXIT_FAILURE);
+    if(get_index(args->dir_path, &new_head, exit_flag) != 0) exit(EXIT_FAILURE);
     pthread_mutex_lock(args->mx_file_saving_flag);
     if (save_data_to_file(args->index_path, new_head) != 0) {
         exit(EXIT_FAILURE);
@@ -60,11 +60,13 @@ void * index_thread_work(void * raw_args) {
     struct timespec last_edit_time, current_time;
     index_args * args = raw_args;
     struct stat filestat;
+    int status_flag = DONE;
+    int exit_flag = NONE;
     
 
     if(lstat(args->index_path, &filestat)) {
         if (errno == ENOENT) {
-            perform_indexing(args);
+            perform_indexing(args, &exit_flag);
             clock_gettime(CLOCK_REALTIME, &last_edit_time);
             if(args->time > 0) alarm(args->time);
         }
@@ -80,7 +82,7 @@ void * index_thread_work(void * raw_args) {
         exit(EXIT_FAILURE); 
     }
     if (args->time > 0 && ELAPSED(last_edit_time, current_time) >= args->time) {
-        perform_indexing(args);
+        perform_indexing(args, &exit_flag);
         clock_gettime(CLOCK_REALTIME, &last_edit_time);
         alarm(args->time);
     } 
@@ -101,8 +103,6 @@ void * index_thread_work(void * raw_args) {
         old_head = NULL;
     }
 
-    int status_flag = DONE;
-    int exit_flag = NONE;
 
     sigset_t signals;
     sigemptyset(&signals);
@@ -122,7 +122,7 @@ void * index_thread_work(void * raw_args) {
                     fprintf(stderr, "Clock_gettime function failed");
                     exit(EXIT_FAILURE); 
                 }
-                perform_indexing(args);
+                perform_indexing(args, &exit_flag);
                 clock_gettime(CLOCK_REALTIME, &last_edit_time);
                 alarm(args->time);
             }
@@ -135,7 +135,7 @@ void * index_thread_work(void * raw_args) {
             }
             pthread_mutex_unlock(args->mx_status_flag);
             if (status_flag == PENDING) {
-                perform_indexing(args);
+                perform_indexing(args, &exit_flag);
                 clock_gettime(CLOCK_REALTIME, &last_edit_time);
                 if(args->time > 0) alarm(args->time);
             }
@@ -147,8 +147,7 @@ void * index_thread_work(void * raw_args) {
         pthread_mutex_lock(args->mx_exit_flag);
         exit_flag = args->exit_flag;
         pthread_mutex_unlock(args->mx_exit_flag);
-        if (exit_flag == EXIT) break;
+        if (exit_flag == EXIT || exit_flag == EXIT_NOW) break;
     }
-
     return NULL;
 }
