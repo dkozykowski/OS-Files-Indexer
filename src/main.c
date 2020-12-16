@@ -8,24 +8,14 @@
 #include "../lib/get_index/get_index.h"
 #include "../lib/read_commands/read_commands.h"
 #include "../models/node.h"
+#include "../utils/utils.h"
 #include "../models/file_data.h"
-
-static void free_old_list(node * head) {
-    node * temp;
-    while(head) {
-        temp = head;
-        head = head->next;
-        if(temp->elem.name) free(temp->elem.name);
-        if (temp->elem.path) free(temp->elem.path);
-        free(temp);
-    }
-}
 
 int main(int argc, char ** argv) {
     int n;
     char * index_path, * dir_path;
     index_path = dir_path = NULL;
-    if(read_params(argc, argv, &dir_path, &index_path, &n) != 0) return EXIT_FAILURE;
+    if(read_params(argc, argv, &dir_path, &index_path, &n) != 0) FATAL("Read_params");
     node * head, *temp;
     head = temp = NULL;
     pthread_mutex_t mx_head = PTHREAD_MUTEX_INITIALIZER;
@@ -41,10 +31,7 @@ int main(int argc, char ** argv) {
     sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 
     index_args * args_index = malloc(sizeof(index_args));
-    if(!args_index) {
-        fprintf(stderr, "Malloc function failed\n");
-        return EXIT_FAILURE;
-    }
+    if(!args_index) FATAL("Malloc");
     args_index->mx_stdout = &mx_stdout;
     args_index->head = &head;
     args_index->index_path = index_path;
@@ -56,17 +43,11 @@ int main(int argc, char ** argv) {
     args_index->mx_exit_flag = &mx_exit_flag;
     args_index->exit_flag = NONE;
     args_index->mx_file_saving_flag = &mx_file_saving_flag;
-    if(pthread_create(&(args_index->id), NULL, index_thread_work, args_index) != 0) {
-        fprintf(stderr, "Pthread_create function failed\n");
-        return EXIT_FAILURE;
-    }
-    sleep(1);
+    if(pthread_create(&(args_index->id), NULL, index_thread_work, args_index) != 0) FATAL("Pthread_create");
+
     read_commands_args * args_r_c;
     args_r_c = malloc(sizeof(read_commands_args));
-    if(!args_r_c) {
-        fprintf(stderr, "Malloc function failed\n");
-        exit(EXIT_FAILURE);
-    }
+    if(!args_r_c) FATAL("Malloc");
     args_r_c->mx_status_flag = &mx_status_flag;
     args_r_c->mx_stdout = &mx_stdout;
     args_r_c->mx_status_flag = &mx_status_flag;

@@ -1,5 +1,5 @@
-mole: lib/read_params/read_params.o lib/get_index/get_index.o src/main.o  lib/index_pthread/index_pthread.o lib/data_saving/data_saving.o lib/read_commands/read_commands.o lib/bulk_operations/bulk_operations.o
-	gcc -Wall -std=gnu99 -o mole src/main.o lib/read_params/read_params.o lib/get_index/get_index.o lib/index_pthread/index_pthread.o lib/data_saving/data_saving.o lib/read_commands/read_commands.o lib/bulk_operations/bulk_operations.o -lpthread -lm 
+mole: utils/utils.o lib/read_params/read_params.o lib/get_index/get_index.o src/main.o  lib/index_pthread/index_pthread.o lib/data_saving/data_saving.o lib/read_commands/read_commands.o lib/bulk_operations/bulk_operations.o
+	gcc -Wall -std=gnu99 -o mole src/main.o lib/read_params/read_params.o lib/get_index/get_index.o lib/index_pthread/index_pthread.o lib/data_saving/data_saving.o lib/read_commands/read_commands.o lib/bulk_operations/bulk_operations.o utils/utils.o -lpthread -lm 
 	make clean
 
 lib/read_commands/read_commands.o: lib/read_commands/read_commands.c
@@ -20,6 +20,9 @@ lib/get_index/get_index.o:
 lib/bulk_operations/bulk_operations.o: lib/bulk_operations/bulk_operations.c
 	gcc -Wall -o lib/bulk_operations/bulk_operations.o -c lib/bulk_operations/bulk_operations.c
 
+utils/utils.o: utils/utils.c
+	gcc -Wall -o utils/utils.o -c utils/utils.c
+
 src/main.o: src/main.c
 	gcc -Wall -o src/main.o -c src/main.c
 
@@ -32,6 +35,7 @@ clean:
 	rm lib/index_pthread/*.o
 	rm lib/data_saving/*.o
 	rm lib/read_commands/*.o
+	rm utils/*.o
 
 clean_all: 
 	rm mole 
@@ -41,3 +45,4 @@ clean_all:
 	rm lib/index_pthread/*.o
 	rm lib/data_saving/*.o
 	rm lib/read_commands/*.o
+	rm utils/*.o
