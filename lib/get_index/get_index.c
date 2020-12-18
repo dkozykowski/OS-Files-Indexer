@@ -17,6 +17,7 @@
 #define MAXFD 20
 #define MAGIC_NUMBERS_BYTES 2
 #define BITS_IN_BYTE 8
+#define NFTW_STOPPED_ON_FLAG 111
 node * head;
 int * exit_flag;
 int ile = 0;
@@ -49,7 +50,7 @@ static file create_new_file(const char *path, const struct stat *s, int offset, 
 
 static int walk(const char *path, const struct stat *s, int type, struct FTW *f) {
     file new_file;
-    if (*exit_flag == EXIT_NOW) return 0;
+    if (*exit_flag == EXIT_NOW) return NFTW_STOPPED_ON_FLAG;
 
     if (type == FTW_D) {
         new_file = create_new_file(path, s, f->base, DIR);
@@ -75,7 +76,10 @@ static int walk(const char *path, const struct stat *s, int type, struct FTW *f)
 int get_index(char * dir_path, node ** global_head, int * exit_flag_handler) {
     exit_flag = exit_flag_handler;
     head = NULL;
-    if (nftw(dir_path, walk, MAXFD, FTW_PHYS) != 0) FATAL("Nftw");
+    int nftw_exit_status;
+    if ((nftw_exit_status = nftw(dir_path, walk, MAXFD, FTW_PHYS)) != 0) {
+        if (nftw_exit_status != NFTW_STOPPED_ON_FLAG) FATAL("Nftw");
+    }
 
     if (*exit_flag == EXIT_NOW) free_old_list(head);
     else *global_head = head;

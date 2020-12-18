@@ -15,6 +15,7 @@ typedef struct read_commands_args
     pthread_mutex_t *mx_head;
     node ** head;
     char * pager;
+    pthread_t indexing_thread_id;
 } read_commands_args;
 
 

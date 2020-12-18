@@ -12,10 +12,10 @@
 #include "../models/file_data.h"
 
 int main(int argc, char ** argv) {
-    int n;
+    int n, default_index_path = 0;
     char * index_path, * dir_path;
     index_path = dir_path = NULL;
-    if(read_params(argc, argv, &dir_path, &index_path, &n) != 0) FATAL("Read_params");
+    if(read_params(argc, argv, &dir_path, &index_path, &n, &default_index_path) != 0) FATAL("Read_params");
     node * head, *temp;
     head = temp = NULL;
     pthread_mutex_t mx_head = PTHREAD_MUTEX_INITIALIZER;
@@ -23,12 +23,6 @@ int main(int argc, char ** argv) {
     pthread_mutex_t mx_status_flag = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mx_exit_flag = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mx_file_saving_flag = PTHREAD_MUTEX_INITIALIZER;
-
-    sigset_t signals_to_block;
-    sigemptyset(&signals_to_block);
-    sigaddset(&signals_to_block, SIGALRM);
-    sigaddset(&signals_to_block, SIGUSR1);
-    sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
 
     index_args * args_index = malloc(sizeof(index_args));
     if(!args_index) FATAL("Malloc");
@@ -58,6 +52,7 @@ int main(int argc, char ** argv) {
     args_r_c->mx_head = &mx_head;
     args_r_c->mx_file_saving_flag = &mx_file_saving_flag;
     args_r_c->pager = getenv("PAGER");
+    args_r_c->indexing_thread_id = args_index->id;
     
     read_commands(args_r_c);
 
@@ -65,5 +60,6 @@ int main(int argc, char ** argv) {
     free(args_index);
     free(args_r_c);
     free_old_list(head);
+    if (default_index_path) free(index_path);
     return EXIT_SUCCESS;
 }

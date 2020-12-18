@@ -7,12 +7,12 @@
 #include "../index_pthread/index_pthread.h"
 #include "../get_index/get_index.h"
 #include "../../utils/utils.h"
-#define MAX_ELEMS_WITHOUT_PAGER 3
-#define MAX_COMMAND_LENGH 20
 #define MAX_ARGUMENT_LENGH 50
 #define BUFFER_SIZE 100
-#define MAX_COMMAND_LENGH_TEXT "20"
-#define MAX_ARGUMENT_LENGH_TEXT "50"
+#define QUOTE(TEXT) #TEXT
+#define MAX_ELEMS_WITHOUT_PAGER 3
+#define MAX_COMMAND_LENGH 20
+#define EXPAND(TEXT) QUOTE(TEXT)
 
 static void count(read_commands_args *args) {
     int dir_counter = 0, jpeg_counter = 0, png_counter = 0, gzip_counter = 0, zip_counter = 0;
@@ -147,7 +147,7 @@ static void m_exit(read_commands_args *args) {
         *(args->exit_flag) = EXIT;
     } pthread_mutex_unlock(args->mx_exit_flag);
 
-    if(kill(getpid(), SIGUSR1) != 0) FATAL("kill");
+    if(pthread_kill(args->indexing_thread_id, SIGUSR1) != 0) FATAL("kill");
 }
 
 static void exit_now(read_commands_args *args) {
@@ -155,7 +155,7 @@ static void exit_now(read_commands_args *args) {
         *(args->exit_flag) = EXIT_NOW;
     } pthread_mutex_unlock(args->mx_exit_flag);
     
-    if(kill(getpid(), SIGUSR1) != 0) FATAL("Kill");
+    if(pthread_kill(args->indexing_thread_id, SIGUSR1) != 0) FATAL("Kill");
 }
 
 static void m_index(read_commands_args *args, int * status_flag) {
@@ -170,7 +170,7 @@ static void m_index(read_commands_args *args, int * status_flag) {
         } pthread_mutex_unlock(args->mx_stdout);
     }
 
-    if(kill(getpid(), SIGUSR1) != 0) FATAL("Kill");
+    if(pthread_kill(args->indexing_thread_id, SIGUSR1) != 0) FATAL("Kill");
 }
 
 void read_commands(read_commands_args *args) {
@@ -182,7 +182,7 @@ void read_commands(read_commands_args *args) {
     while(1) {
         fgets(buffer, BUFFER_SIZE, stdin);
         int arguments_read = 
-            sscanf(buffer, "%"MAX_COMMAND_LENGH_TEXT"s %"MAX_ARGUMENT_LENGH_TEXT"s", command_name, argument);
+            sscanf(buffer, "%"EXPAND(MAX_COMMAND_LENGH)"s %"EXPAND(MAX_ARGUMENT_LENGH)"s", command_name, argument);
         if (strcmp(command_name, "exit") == 0) {
             if (arguments_read != 1) { ERR("Invalid argument"); continue; }
             m_exit(args);

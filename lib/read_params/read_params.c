@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #define NOT_SET -1
+#define MOLE_FILE_NAME_LENGHT 12
 
 static void usage(char * pname) {
     fprintf(stderr, "USAGE: %s [-d DIR_PATH] [-f INDEX_PATH] [-t TIME]\n", pname);
@@ -37,7 +39,7 @@ static int read_command_line_arguments(int argc, char ** argv, char ** dir_path,
     return EXIT_SUCCESS;
 }
 
-static int load_default_if_not_set(char ** dir_path, char ** index_path, int * n) {
+static int load_default_if_not_set(char ** dir_path, char ** index_path, int * n, int * default_index_path) {
     if (!(*n)) (*n) = NOT_SET; 
     if (*dir_path == NULL) {
         if (((*dir_path) = getenv("MOLE_DIR")) == NULL) {
@@ -47,14 +49,21 @@ static int load_default_if_not_set(char ** dir_path, char ** index_path, int * n
     }
     if (*index_path == NULL) {
         if (((*index_path) = getenv("MOLE_INDEX_PATH")) == NULL) {
-            (*index_path) = "/.mole-index";
+            char * home_dir_path = getenv("HOME");
+            if (home_dir_path == NULL) {
+                fprintf(stderr, "-f INDEX_PATH parameter was not given and HOME variable was not set\n");
+                return EXIT_FAILURE;
+            }
+            *index_path = malloc(strlen(home_dir_path) + MOLE_FILE_NAME_LENGHT);
+            sprintf(*index_path, "%s/.mole-index", home_dir_path);
+            * default_index_path = 1;
         }
     }
     return EXIT_SUCCESS;
 }
 
-int read_params(int argc, char ** argv, char ** dir_path, char ** index_path, int * n) {
+int read_params(int argc, char ** argv, char ** dir_path, char ** index_path, int * n, int * default_index_path) {
     if (read_command_line_arguments(argc, argv, dir_path, index_path, n) != 0) return EXIT_FAILURE;
-    if (load_default_if_not_set(dir_path, index_path, n) != 0) return EXIT_FAILURE;
+    if (load_default_if_not_set(dir_path, index_path, n, default_index_path) != 0) return EXIT_FAILURE;
     return EXIT_SUCCESS;
 }

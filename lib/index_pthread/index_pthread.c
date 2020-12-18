@@ -106,6 +106,7 @@ static void work_on_signals(
     sigemptyset(&signals);
     sigaddset(&signals, SIGALRM);
     sigaddset(&signals, SIGUSR1);
+    if (pthread_sigmask(SIG_BLOCK, &signals, NULL)) FATAL("Pthread_sigmask");
 
     int signo;
     while(1) {
