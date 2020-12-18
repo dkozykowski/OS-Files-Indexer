@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "../../utils/utils.h"
 #define NOT_SET -1
 #define MOLE_FILE_NAME_LENGHT 12
 
@@ -55,6 +56,7 @@ static int load_default_if_not_set(char ** dir_path, char ** index_path, int * n
                 return EXIT_FAILURE;
             }
             *index_path = malloc(strlen(home_dir_path) + MOLE_FILE_NAME_LENGHT);
+            if (index_path == NULL) FATAL("Malloc");
             sprintf(*index_path, "%s/.mole-index", home_dir_path);
             * default_index_path = 1;
         }
