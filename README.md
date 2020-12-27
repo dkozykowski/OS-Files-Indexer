@@ -49,15 +49,15 @@ Powinien powstać jeden program o nazwie `mole`, który przyjmuje następujące 
 
 <dt>-d sciezka</dt>
 
-<dd>ścieżka do katalogu, który będzie przeglądany. W przypadku, gdy opcja nie jest podana, zamiast tego wykorzystywana jest ścieżka wskazywana przez zmienną środowiskową `$MOLE_DIR`. Jeśli zmienna nie jest ustawiona, to wyświetlany jest błąd wywołania i program się kończy. Ostateczna wartość tego parametru będzie dalej oznaczona **path-d**.</dd>
+<dd>ścieżka do katalogu, który będzie przeglądany. W przypadku, gdy opcja nie jest podana, zamiast tego wykorzystywana jest ścieżka wskazywana przez zmienną środowiskową <code>$MOLE_DIR</code>. Jeśli zmienna nie jest ustawiona, to wyświetlany jest błąd wywołania i program się kończy. Ostateczna wartość tego parametru będzie dalej oznaczona <b>path-d</b>.</dd>
 
 <dt>-f sciezka</dt>
 
-<dd>ścieżka do pliku, z którego będzie czytany/zapisywany indeks. Jeśli opcja nie jest podana, to zamiast tego wykorzystywana jest ścieżka wskazywania przez zmienną środowiskową `$MOLE_INDEX_PATH`. Jeśli zmienna nie jest ustawiona, to domyślną wartością jest plik `.mole-index` w katalogu domowym użytkownika. Ostateczna wartość tego parametru będzie dalej oznaczona **path-f**.</dd>
+<dd>ścieżka do pliku, z którego będzie czytany/zapisywany indeks. Jeśli opcja nie jest podana, to zamiast tego wykorzystywana jest ścieżka wskazywania przez zmienną środowiskową <code>$MOLE_INDEX_PATH</code>. Jeśli zmienna nie jest ustawiona, to domyślną wartością jest plik <code>.mole-index</code> w katalogu domowym użytkownika. Ostateczna wartość tego parametru będzie dalej oznaczona <b>path-f</b>.</dd>
 
 <dt>-t n</dt>
 
-<dd>gdzie n to liczba całkowita z przedziału \([30,7200]\). Jest to czas przerwy w sekundach pomiędzy kolejnymi przebiegami indeksowania katalogu opisanymi dalej. Ta opcja jest opcjonalna, jeśli nie jest podana, to periodyczne uruchamianie indeksowania jest wyłączone. Wartość parametru będzie dalej oznaczona jako **t**.</dd>
+<dd>gdzie n to liczba całkowita z przedziału &#60;30, 7200&#62;. Jest to czas przerwy w sekundach pomiędzy kolejnymi przebiegami indeksowania katalogu opisanymi dalej. Ta opcja jest opcjonalna, jeśli nie jest podana, to periodyczne uruchamianie indeksowania jest wyłączone. Wartość parametru będzie dalej oznaczona jako <b>t</b>.</dd>
 
 </dl>
 
@@ -71,7 +71,7 @@ Powinien powstać jeden program o nazwie `mole`, który przyjmuje następujące 
 
 <div class="outline-text-2" id="text-3">
 
-Po uruchomieniu program próbuje otworzyć plik **path-f** i jeśli ten istnieje, czyta z niego indeks katalogu. W przeciwnym przypadku uruchamia procedurę indeksowania opisaną dalej. Następnie przechodzi do oczekiwania na komendy wpisywane na `stdin` przez użytkownika.
+Po uruchomieniu program próbuje otworzyć plik <b>path-f</b> i jeśli ten istnieje, czyta z niego indeks katalogu. W przeciwnym przypadku uruchamia procedurę indeksowania opisaną dalej. Następnie przechodzi do oczekiwania na komendy wpisywane na `stdin` przez użytkownika.
 
 </div>
 
@@ -99,7 +99,7 @@ Indeks ma przechowywać następujące informacje:
 *   uid właściciela,
 *   typ (jeden z wyżej wymienionych).
 
-Procedura indeksowania polega na uruchomieniu pojedynczego wątku, który w pierwszej kolejności czyści strukturę indeksu, a następnie sprawdza wszystkie pliki w katalogu **path-d** i podkatalogach. Dla każdego z plików wykonuje sprawdzenie. czy typ pliku należy do typów, które indeksujemy i jeśli tak jest, zapisuje wymienione dane pliku do indeksu. Na koniec zapisuje indeks do pliku **path-f**.
+Procedura indeksowania polega na uruchomieniu pojedynczego wątku, który w pierwszej kolejności czyści strukturę indeksu, a następnie sprawdza wszystkie pliki w katalogu <b>path-d</b> i podkatalogach. Dla każdego z plików wykonuje sprawdzenie. czy typ pliku należy do typów, które indeksujemy i jeśli tak jest, zapisuje wymienione dane pliku do indeksu. Na koniec zapisuje indeks do pliku <b>path-f</b>.
 
 Po zakończeniu indeksowania, które dzieje się zawsze w tle (w oddzielnym wątku), na stdout wypisywany jest komunikat o zakończeniu działania.
 
@@ -131,7 +131,7 @@ Komendy:
 
 <dt>index</dt>
 
-<dd>jeśli w danej chwili nie trwa indeksowanie, to uruchamia w tle indeksowanie katalogu **path-d** i natychmiast zaczyna oczekiwać na kolejną komendę z stdin. Jeśli w danej chwili indeksowanie jest w toku, to wyświetla komunikat z tą informacją i nie powoduje żadnych dodatkowych akcji.</dd>
+<dd>jeśli w danej chwili nie trwa indeksowanie, to uruchamia w tle indeksowanie katalogu <b>path-d</b> i natychmiast zaczyna oczekiwać na kolejną komendę z stdin. Jeśli w danej chwili indeksowanie jest w toku, to wyświetla komunikat z tą informacją i nie powoduje żadnych dodatkowych akcji.</dd>
 
 <dt>count</dt>
 
@@ -159,7 +159,7 @@ Komendy:
 
 <div class="outline-text-4" id="text-3-2-1">
 
-Jeśli którakolwiek z komend largerthan, namepart, owner, będzie wypisywać więcej niż 3 rekordy, należy dostarczyć użytkownikowi możliwość przewijania wyników. W tym celu należy skorzystać ze zmiennej środowiskowej `$PAGER`. Jeśli zmienna środowiskowa `$PAGER<div class="outline-text-4" id="text-3-2-1" nie jest ustawiona lub wynik zawiera nie więcej niż trzy rekordy, to po prostu wypisujemy znalezione rekordy na stdout. W przeciwnym przypadku, należy uruchomić program o nazwie wskazywanej przez zmienną pager z użyciem funkcji `popen` i do uzyskanego strumienia plikowego, który będzie standardowym wejściem uruchomionego programu, wypisywać kolejne rekordy. Na koniec zamknąć strumień i zaczekać na proces potomny z użyciem `pclose`.
+Jeśli którakolwiek z komend largerthan, namepart, owner, będzie wypisywać więcej niż 3 rekordy, należy dostarczyć użytkownikowi możliwość przewijania wyników. W tym celu należy skorzystać ze zmiennej środowiskowej `$PAGER`. Jeśli zmienna środowiskowa `$PAGER` nie jest ustawiona lub wynik zawiera nie więcej niż trzy rekordy, to po prostu wypisujemy znalezione rekordy na stdout. W przeciwnym przypadku, należy uruchomić program o nazwie wskazywanej przez zmienną pager z użyciem funkcji `popen` i do uzyskanego strumienia plikowego, który będzie standardowym wejściem uruchomionego programu, wypisywać kolejne rekordy. Na koniec zamknąć strumień i zaczekać na proces potomny z użyciem `pclose`.
 
 Funkcje `popen` i `pclose` nie były omówione na zajęciach, należy samodzielnie uzyskać informacje na temat ich działania.
 
@@ -203,7 +203,7 @@ Zapis i odczyt pliku indeksu tylko z użyciem niskopoziomowych operacji na plika
 
 <div class="outline-text-3" id="text-3-5">
 
-Jeśli program został uruchomiony w parametrem **t**, uruchamiany jest wątek, który uruchamia ponowne indeksowanie katalogu **path-d**, jeśli ostatnie indeksowanie zostało wykonane więcej niż **t** sekund temu. Czas ostatniego indeksowania uwzględnia zarówno indeksowanie na starcie programu, jeśli wystąpiło, indeksowanie zapoczątkowane komendą użytkownika oraz indeksowanie inicjowane po przekroczeniu czasu **t**. W przypadku, gdy program został uruchomiony i istniał już plik z indeksem, to za czas ostatniego indeksowania przyjmujemy datę modyfikacji pliku z indeksem (to może oznaczać uruchomienie indeksowania tuż po starcie programu).
+Jeśli program został uruchomiony w parametrem <b>t</b>, uruchamiany jest wątek, który uruchamia ponowne indeksowanie katalogu <b>path-d</b>, jeśli ostatnie indeksowanie zostało wykonane więcej niż <b>t</b> sekund temu. Czas ostatniego indeksowania uwzględnia zarówno indeksowanie na starcie programu, jeśli wystąpiło, indeksowanie zapoczątkowane komendą użytkownika oraz indeksowanie inicjowane po przekroczeniu czasu <b>t</b>. W przypadku, gdy program został uruchomiony i istniał już plik z indeksem, to za czas ostatniego indeksowania przyjmujemy datę modyfikacji pliku z indeksem (to może oznaczać uruchomienie indeksowania tuż po starcie programu).
 
 </div>
 
