@@ -1,6 +1,8 @@
 <div id="content">
 
 # Systemy Operacyjne 1: Projekt Indeksowanie plików w katalogach
+   
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <div id="table-of-contents">
 
